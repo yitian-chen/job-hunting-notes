@@ -1,0 +1,12 @@
+{
+  "terminal:close-terminal": [],
+  "editing-toolbar:ai-inline-completion": [],
+  "terminal:open-terminal.select.current": [
+    {
+      "modifiers": [
+        "Mod"
+      ],
+      "key": "J"
+    }
+  ]
+}
