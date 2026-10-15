@@ -11,3 +11,10 @@
 
 # Optional
 .obsidian/plugins
+
+# 面试录像与音频（体积过大，不入库）
+e面试复盘/记录视频/
+e面试复盘/音频/
+
+# 独立的简历模板仓库，有自己的远端
+y简历与文档/简历/zju-resume-template/

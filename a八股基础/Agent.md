@@ -11,10 +11,10 @@ RAG 为 Retrieval-Augmented Generation 的缩写，即检索增强生成。
 	4. **入库**：把每个 chunk 的向量和原始文本一起存进向量数据库中。这些数据库专门优化了高纬向量的存储和相似度搜索，包括 Chroma, Milvus, Qdrant 等。
 
 **在线阶段**：
-	5. Query 处理：改写用户问题使其更适宜检索，补充上下文。
-	6. 向量检索(粗排)：把用户问题也转化为向量，去向量数据库中做相似度搜索，找出举例最接近的 K 个 chunk。（很快）
-	7. Rerank(精排)：用 Rerank 模型把每个用户问题和每个候选 chunk 拼在一起，理解其相关性，然后重新排序，过滤不相关的结果。（准确但慢）
-	8. 生成：将用户问题 + 精排后的 chunk 拼接成为 prompt，交给 LLM 生成最终答案。
+	5. **Query 处理**：改写用户问题使其更适宜检索，补充上下文。
+	6. **向量检索(粗排)**：把用户问题也转化为向量，去向量数据库中做相似度搜索，找出举例最接近的 K 个 chunk。（很快）
+	7. **Rerank(精排)**：用 Rerank 模型把每个用户问题和每个候选 chunk 拼在一起，理解其相关性，然后重新排序，过滤不相关的结果。（准确但慢）
+	8. **生成**：将用户问题 + 精排后的 chunk 拼接成为 prompt，交给 LLM 生成最终答案。
 
 ---
 ## Q2: 怎么解决大模型出现幻觉的问题？
@@ -50,5 +50,36 @@ RAG 为 Retrieval-Augmented Generation 的缩写，即检索增强生成。
 然后是海外模型：
 - Claude Sonnet / Opus 系列：长文本、代码、Agent 调度能力很强。但成本很高，国内可用性不佳。
 - GPT-5.5 系列：适合作为复杂推理、代码、多模态能力的标杆模型。成本略低于 Claude，但依然不低。
+
+---
+## Q5: 如何理解 LangChain 4 j？
+LangChain4j 是 Java 生态里的一套 LLM 应用开发框架，允许开发者以统一的 API 调用不同的大模型、做向量检索、构建 RAG 管道，而不需要为每个模型单独写适配代码。
+
+它的三层能力：
+1. 模型抽象层：用一套接口对接不同厂商的模型，使它们能通过完全相同的 API 来调用，有统一的配置方式。
+2. RAG 管道层：封装了把文本变成向量、查询向量、调用大模型的过程，直接调用它的方法即可。
+3. 声明式 Agent: 直接声明一个 agent 接口，无需写实现类，调用 AiService 的时候它会自动生成一个动态代理对象，自动处理 @SystemMessage 与 @UserMessage。
+
+---
+## Q6：讲讲 Function Calling
+用 `@Tool` 注册工具，使 agent 具备执行能力。需要写清楚 description，由系统做好参数校验。
+``` Java
+@Tool("根据房间ID查询详细信息")
+  public String getRoomDetail(Long roomId) {
+      RoomDetailVo vo = roomInfoMapper.getDetailById(roomId);
+      return JsonUtils.toJson(vo);
+  }
+```
+
+---
+## Q7：LLM 的上下文怎么存？
+1. 滑动窗口（小规模）：prompt 结构：[系统消息] + [用户消息 1] + [助手回复 1] + [用户消息 2] + ... + [用户消息 N]，用内存里的 List 来存。最好按照 token 数来做截断，节省 token
+2. 持久化上下文（大规模）：用 LangChain4j 内置的 `.chatMemrotyStore`，每次请求的时候拉取最近 N 轮拼进 prompt，把用户 ID 或者对话 ID 作为 key。
+3. RAG
+
+---
+## Q8: 简单讲讲 MCP
+是标准化的 LLM 与外部工具之间的通信接口。
+有 Server 端、 Client 端。Server 端提供能力，允许 LLM 调用，完成一些特定的工作；Client 端就是支持 MCP 的 AI 客户端，可以自动发现并调用服务端提供的工具。
 
 ---
